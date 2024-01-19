@@ -2,21 +2,28 @@
 @using Models
 <PageTitle>Game Catalog</PageTitle>
 @inject NavigationManager NavigationManager
- 
+
 <h1>Game Catalog</h1>
 <div class="row mb-4">
     <div class="col-sm-6">
-        <button type="button" class="btn btn-primary"  @onclick="CreateGame" >New Game</button>
+        <button type="button" class="btn btn-primary" @onclick="CreateGame">New Game</button>
     </div>
 </div>
 
-@if (games == null) {
-<p><em>Loading...</em></p> 
- }
+@if (games == null)
+{
+    <p><em>Loading...</em></p>
+}
 else
 {
-    <table class="table table-dark ">
-        <thead>
+    @* sends props to the delete Game Component |Game| Onclose *@
+    <DeleteGame Game="@currentGame" OnClose="@onDelModalClose">
+
+    </DeleteGame>
+
+
+    <table class="table  ">
+        <thead class="table-dark">
             <th>Id</th>
             <th>Name</th>
             <th>Genre</th>
@@ -24,7 +31,7 @@ else
             <th>Release</th>
             <th></th>
         </thead>
-        <tbody>
+        <tbody class="table-light">
             @foreach (var game in games)
             {
 
@@ -34,14 +41,26 @@ else
                     <td>@game.Genre</td>
                     <td>@game.Price</td>
                     <td>@game.ReleasedDate.ToString("MM/dd/yyyy")</td>
-                    <td></td>
+                    <td>
+                        <button class="btn bg-info" @onclick="(()=>EditGame(game.Id))">
+                            <iconify-icon icon="akar-icons:pencil" style="color: white"></iconify-icon>
+                        </button>
+                        <button class="btn bg-info" @onclick="(()=> currentGame = game)" data-toggle="modal"
+                            data-target="#deleteGame" data-dismis="modal">
+                            <iconify-icon icon="mdi:bin-outline" style="color: white;"></iconify-icon>
+                        </button>
+                    </td>
                 </tr>
             }
         </tbody>
     </table>
 }
 @code {
+    @* Hold Games list *@
     private Game[]? games;
+    @* Game selected for delete *@
+    private Game? currentGame { get; set; }
+
 
     protected override void OnInitialized()
     {
@@ -49,7 +68,23 @@ else
         games = GameClient.GetGames();
     }
 
-    private void CreateGame(){
+    @* method for navigating to adding a game *@
+    private void CreateGame()
+    {
         NavigationManager.NavigateTo("/game");
+    }
+    @* method for navigating to update games when click *@
+    private void EditGame(int id)
+    {
+        NavigationManager.NavigateTo($"/game/{id}");
+    }
+
+    private void onDelModalClose(bool decision)
+    {
+        if (decision)
+        {
+            GameClient.DeleteGame(currentGame!.Id);
+            games = GameClient.GetGames();
+        }
     }
 }
